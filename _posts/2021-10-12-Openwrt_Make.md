@@ -57,12 +57,12 @@ tags:
 	echo "luci-app-openclash" >> .git/info/sparse-checkout
 	git pull --depth 1 origin master
 	git branch --set-upstream-to=origin/master master
-
+	
 	# 编译 po2lmo (如果有po2lmo可跳过)
 	pushd luci-app-openclash/tools/po2lmo
 	make && sudo make install
 	popd
-
+	
 	# 回退到主项目目录
 	cd ../..
 	```
@@ -102,11 +102,11 @@ tags:
 	   - 在 LuCI > Applications里，现在可以取消luci-app-samba了
 	- 编译丰富插件时，建议修改下面两项默认大小，留足插件空间
 	   - Target Images > (16) Kernel partition size (in MB)
-   	*（默认是 16，建议修改成 64）*
+	   *（默认是 16，建议修改成 64）*
 	   - Target Images > (160) Root filesystem partition size (in MB)
-   	*（默认是 160，建议修改成 512+）*
-  - Utilities > Virtualizatio > +qemu-ga ---> PVE虚拟机助手QEMU-Guest-Agent，非PVE用户不用选
-  - Target Images >+ QCOW2 IMAGES - VMDK IMAGES ---> VM改生成QCOW2镜像，PVE用，非PVE用户可跳过
+	   *（默认是 160，建议修改成 512+）*
+	- Utilities > Virtualizatio > +qemu-ga ---> PVE虚拟机助手QEMU-Guest-Agent，非PVE用户不用选
+	- Target Images >+ QCOW2 IMAGES - VMDK IMAGES ---> VM改生成QCOW2镜像，PVE用，非PVE用户可跳过
 	- Base system >+ dnsmasq-full ---> 选满（HAVE不选）
 	- LuCI > Modules >+ Luci-compat ---> OpenClash依赖
 	- Network > IP Addresses and Names >+ ddns-scripts_cloudflare.com-v4 + ddns-scripts_freedns_42_pl + ddns-scripts_godaddy.com-v1 ---> DDNS插件依赖
@@ -114,7 +114,7 @@ tags:
 	- 添加主题 >+ opentopd
 	- LuCI > Applications 先选[20个（22-2）](https://github.com/Se7enMuting/Actions-OpenWrt/blob/main/2021-10-06-R21_10_1.config)，因为首次编译，建议openclash和passwall先不选；如果全选，且编译通过，那下面的第二次编译就不需要了
 	- 最后再确认kmod-tun被选上了（openclash依赖，一定要最后确认一次，因为会被自动取消掉）
-   	- Kernel modules > Network Support >+ kmod-tun
+	   - Kernel modules > Network Support >+ kmod-tun
 
 
 13. `make -j8 download V=s` 下载dl库（国内请尽量全局科学上网）
@@ -205,7 +205,7 @@ src/gz openwrt_telephony https://mirrors.cloud.tencent.com/lede/releases/21.02.0
 	make defconfig
 	# 1. 如果没有.config文件，生成默认配置的.config文件
 	# 2. 如果有.config文件，检测是否有缺少的配置，有缺少则按照默认的y/n添加上去;没有则使用当前.config文件，不会被改动成默认配置
-
+	
 	make menuconfig
 	# 1. 通过菜单选择来生成.config文件
 
