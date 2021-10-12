@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "🧰OpenWRT云/自编译碎碎念"
+title: "🧰OpenWRT⛏️云/自编译📿碎碎念"
 subtitle: ""
 author: "Se7enMuting"
 header-img: "img/posts/211012/post-bg.png"
