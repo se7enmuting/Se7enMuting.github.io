@@ -40,10 +40,9 @@ tags:
 	:wq                                               #保存退出
 	```
 
-6. 添加下面代码到根目录下`feeds.conf.default`文件内（添加passwall和自定义的feeds源）
+6. 添加下面代码到根目录下`feeds.conf.default`文件内（添加passwall源）
 	```
 	src-git lienol https://github.com/xiaorouji/openwrt-passwall
-	src-git Se7en https://github.com/Se7enMuting/openwrt-packages
 	```
 
 7. 添加openclash源
@@ -67,18 +66,18 @@ tags:
 	cd ../..
 	```
 
-8. 删除lean原包中的luci-app-wrtbwmon和luci-app-netdata，避免warning
-	```
-	rm -rf package/lean/luci-app-wrtbwmon/
-	rm -rf package/lean/luci-app-netdata/
-	```
+8. 添加其他主题和插件（不需要可跳过）
+  ```
+  git clone https://github.com/sirpdboy/luci-theme-opentopd package/luci-theme-opentopd
+  git clone https://github.com/Se7enMuting/Openwrt-Packages package/Openwrt-Packages
+  ```
 
 9. update feeds
 	```
 	./scripts/feeds update -a
 	```
 
-10. 强制安装（-f）feeds，如feeds和lean源有同名的package，强制安装feed里的
+10. 强制安装（-f）feeds，如feeds和lean源有同名的package，强制安装feeds里的
 	```
 	./scripts/feeds install -a -f
 	```
@@ -113,7 +112,7 @@ tags:
 	- Network >+ iperf3 ---> luci-app-netspeedtest需要
 	- Network > WirlessAPD >- wpad - hostapd-common ---> 取消Wirless选项，避免报错
 	- 添加主题 >+ opentopd
-	- LuCI > Applications 先选[20个（22-2）](https://github.com/Se7enMuting/Actions-OpenWrt/blob/main/2021-10-06-R21_10_1.config)，因为首次编译，建议openclash和passwall先不选；如果全选，且编译通过，那下面的第二次编译就不需要了
+	- LuCI > Applications 先选[XX-2个](https://github.com/Se7enMuting/Actions-OpenWrt/blob/main/lean/.config)，因为首次编译，建议openclash和passwall先不选；如果全选，且编译通过，那下面的第二次编译就不需要了
 	- 最后再确认kmod-tun被选上了（openclash依赖，一定要最后确认一次，因为会被自动取消掉）
 	   - Kernel modules > Network Support >+ kmod-tun
 
@@ -130,7 +129,7 @@ tags:
 	rm -rf ./tmp && rm -rf .config
 	```
 
-2. 重复**首次编译**中的第12步，LuCI > Applications里选[22个](https://github.com/Se7enMuting/Actions-OpenWrt/blob/main/2021-10-06-R21_10_1.config)（+openclash和passwall）
+2. 重复**首次编译**中的第12步，LuCI > Applications里选[XX个](https://github.com/Se7enMuting/Actions-OpenWrt/blob/main/lean/.config)（+openclash和passwall）
 	```
 	make menuconfig
 	```
