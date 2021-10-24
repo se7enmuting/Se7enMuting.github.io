@@ -67,14 +67,14 @@ tags:
 	```
 
 8. 添加其他主题和插件（不需要可跳过）
-  ```
-  git clone https://github.com/sirpdboy/luci-theme-opentopd package/luci-theme-opentopd
-  git clone https://github.com/Se7enMuting/Openwrt-Packages package/Openwrt-Packages
+	```
+	git clone https://github.com/sirpdboy/luci-theme-opentopd package/luci-theme-opentopd
+	git clone https://github.com/Se7enMuting/Openwrt-Packages package/Openwrt-Packages
 
-  cd lede/package/lean
-  rm -rf luci-theme-argon
-  git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git
-  ```
+	cd lede/package/lean
+	rm -rf luci-theme-argon
+	git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git
+	```
 
 9. update feeds
 	```
