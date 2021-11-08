@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "在 Debian 内建一个 udpxy 转发服务，实现自由看(上海电信) IPTV"
+title: "📺在 Debian 内建一个 udpxy 转发服务，实现自由看(上海电信) IPTV"
 subtitle: ""
 author: "Se7enMuting"
 header-img: "img/posts/211108/post-bg.png"
@@ -23,7 +23,7 @@ tags:
 - https://cloud.debian.org/images/cloud/ 用 10(buster)或 11(bullseye)
 - 下载 debian-1x-generic-amd64.qcow2 或者 debian-1x-genericcloud-amd64.qcow2 镜像
 - 大致流程：建立 VM 机, 删除硬盘, 上传镜像到宿主机 /root/，用这条指令 `qm importdisk xxx debian-10-genericcloud-amd64.qcow2 local-lvm`  (XXX是VM的ID) 创建系统硬盘，再点编辑--添加硬盘，再点`调整磁盘大小`，增加大小(到 10 G 左右可)，然后 reboot 即可，Debian 系统内不用做任何操作, 自动扩容
-- 如果用 ***-genericcloud 版镜像要添加CloudInit设备，再配置
+- 如果用 *-genericcloud-amd64.qcow2 版镜像要添加CloudInit设备，再配置
 
 ### 安装 Docker, Docker Compose
 - Docker Engine 官方教程: https://docs.docker.com/engine/install/debian/
@@ -75,7 +75,7 @@ services:
     command: -T -a eth0 -p 4022 -m ens19
 ```
 安装指令: `docker compose up -d`
-注意 `eth0` 是接交换机的口，是 `ens19` 接电信光猫的口, 根据自己实际情况修改  
+注意 `eth0` 是接交换机的口，是 `ens19` 接电信光猫的口, 根据自己实际情况修改
 udpxyd 的 web 访问地址(`/status/` 要打全): http://192.168.1.172:4022/status/
 
 ### 到此就建完了
