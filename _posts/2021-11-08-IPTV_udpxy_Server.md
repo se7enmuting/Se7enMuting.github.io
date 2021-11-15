@@ -43,27 +43,27 @@ tags:
  ![image02](/img/posts/211108/02.jpg)
 
  - **重要：网络设置，不然igmp的流量走不通**
-  - 输入
-  ```
-  sysctl -w net.ipv4.conf.ens19.force_igmp_version=2 && \
-  sysctl -w net.ipv4.conf.ens19.rp_filter=0 && \
-  sysctl -w net.ipv4.conf.all.rp_filter=0
-  ```
+    - 输入
+    ```
+    sysctl -w net.ipv4.conf.ens19.force_igmp_version=2 && \
+    sysctl -w net.ipv4.conf.ens19.rp_filter=0 && \
+    sysctl -w net.ipv4.conf.all.rp_filter=0
+    ```
 
-  - 再输入, 保存生效
-  ```
-  /sbin/sysctl -p  && \
-  /sbin/sysctl -w net.ipv4.route.flush=1
-  ```
+    - 再输入, 保存生效
+    ```
+    /sbin/sysctl -p  && \
+    /sbin/sysctl -w net.ipv4.route.flush=1
+    ```
 
-  - 删除还原方法
-  ```
-  sysctl -w net.ipv4.conf.ens19.force_igmp_version=0
-  sysctl -w net.ipv4.conf.ens19.rp_filter=1
-  sysctl -w net.ipv4.conf.all.rp_filter=1
-  /sbin/sysctl -p
-  /sbin/sysctl -w net.ipv4.route.flush=1
-  ```
+    - 删除还原方法
+    ```
+    sysctl -w net.ipv4.conf.ens19.force_igmp_version=0
+    sysctl -w net.ipv4.conf.ens19.rp_filter=1
+    sysctl -w net.ipv4.conf.all.rp_filter=1
+    /sbin/sysctl -p
+    /sbin/sysctl -w net.ipv4.route.flush=1
+    ```
 
 ### Docker Compose 安装 udpxy
 docker-compose.yml 配置：
