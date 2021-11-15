@@ -43,7 +43,7 @@ tags:
  ![image02](/img/posts/211108/02.jpg)
 
  - **重要：网络设置，不然igmp的流量走不通**
-    - 输入
+    - 输入(注意：指令中的 ens19 请自行替换你的IPTV网口名)
 ```
 sysctl -w net.ipv4.conf.ens19.force_igmp_version=2 && \
 sysctl -w net.ipv4.conf.ens19.rp_filter=0 && \
@@ -78,7 +78,7 @@ services:
     command: -T -a eth0 -p 4022 -m ens19
 ```
 安装指令: `docker compose up -d`  
-注意 `eth0` 是接交换机的口，是 `ens19` 接电信光猫的口, 根据自己实际情况修改  
+注意 `eth0` 是接交换机的口，是 `ens19` 接电信光猫IPTV的口, 根据自己实际情况修改  
 udpxyd 的 web 访问地址(`/status/` 要打全): http://192.168.1.172:4022/status/
 
 ### 到此就建完了
