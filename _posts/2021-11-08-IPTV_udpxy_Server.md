@@ -19,6 +19,9 @@ tags:
 - 在 Debian 10 内建一个 udpxy 服务, 直接与电信光猫上的有 IPTV 信号的口对接, 无需拨号, 无需电信的 IPTV 盒子, 即可转发 IPTV 组播, 内网直接用 .m3u 表观看，外网通过端口转发或者 xteve + plex 转发观看, 实现在任何地方自由地看自己信号源的 IPTV
 - 大致流程: PVE 安装 Debian 10, 安装 Docker, Docker Dompose, 设置网络, 全 docker 部署: udpxy(xteve, plex)
 
+> udpxy ('you-dee-pixie') is a data stream relay: it reads data streams from a multicast groups and forwards the data to the requesting clients (subscribers).
+> udpxy是一个将UDP组播数据流变成TCP协议单播流的流量中继，它将UDP流量从给定的多播转发到请求的HTTP客户端（订阅者）。
+
 ### 安装宿主机PVE
 - https://www.proxmox.com/downloads, 具体略
 
