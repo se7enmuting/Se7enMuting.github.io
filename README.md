@@ -9,3 +9,6 @@
 
 ### Google Search Console修改：
 /_includes/head.html : `<meta name="google-site-verification" content="xxxxxxxxxxxx" />`
+
+# 
+### 站内内容交流讨论 ➡️ [Discussions](https://github.com/se7enmuting/Se7enMuting.github.io/discussions)
