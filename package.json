@@ -21,5 +21,9 @@
         "dev": "grunt watch & npm run start",
         "boil": "git push boilerplate boilerplate:master",
         "push": "git push origin master --tag"
+    },
+    "overrides": {
+        "js-yaml": "^4.2.0",
+        "minimatch": "^3.1.5"
     }
 }
