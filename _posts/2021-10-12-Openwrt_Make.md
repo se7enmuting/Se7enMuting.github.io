@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "🧰OpenWRT⛏️云/自编译📿碎碎念"
+title: "ImmortalWrt 云编译指北（2026版）"
 subtitle: ""
 author: "Se7enMuting"
 header-img: "img/posts/211012/post-bg.png"
@@ -9,239 +9,302 @@ tags:
   - 技术
   - openwrt
   - 编译
+  - immortalwrt
 ---
 
-# 碎碎念1：[自用云编译Action](https://github.com/Se7enMuting/Actions-OpenWrt)
-# 碎碎念2：本地自编译笔记，基本和上面云编译版一致
-## Lean版本Openwrt（[R21.10.1-687407a](https://github.com/coolsnowwolf/lede/tree/687407acdc585355acd24726eac61dca60cd06fb)）源码仓库+passwalll+openclash，自编译step-by-step说明
+> 本文是 2021 年旧版教程的重写。Lean 版 OpenWrt 已停更多年，改用 [ImmortalWrt](https://github.com/immortalwrt/immortalwrt)（更活跃、包更全、开箱即用的中国用户优化）。
+> 
+> 核心思路不变：**本地生成 seed.config → GitHub Actions 云编译**。本地只管出配置，编译交给云。
+> 
+> 云编译项目：[Se7enMuting/Actions-OpenWrt](https://github.com/Se7enMuting/Actions-OpenWrt)
 
-### 注意：
-1. **不**要用 **root** 用户进行编译！！！
-2. 国内用户编译前最好准备好梯子
-3. 默认登陆IP 192.168.1.* （后面有修改），密码 password
+---
 
-## 1.开始编译流程：
+## 先说结论：还需要本地 Ubuntu 吗？
 
-#### 首次编译
-1. 首先用VMware Workstation Pro 16 装好 Ubuntu 20.04 LTS x64 （虚拟机推荐硬盘大小50G-100G）
+**需要。** 你必须有一个本地 Linux 环境来跑 `make menuconfig` 生成 `seed.config`。
 
-2. 命令行输入 `sudo apt-get update` ，然后输入`sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget curl swig rsync`
+原因：
+1. GitHub Actions 的 SSH/tmate 交互式菜单配置已被 GitHub 严打，有封号风险，且经常不可用；
+2. ImmortalWrt 固件选择器（firmware-selector.immortalwrt.org）不支持外部插件（OpenClash、PassWall2）；
+3. 本地 `menuconfig` 是目前唯一可靠的自定义配置方式。
 
-3. 使用 `git clone https://github.com/coolsnowwolf/lede.git` 命令下载好源代码，然后 `cd lede` 进入目录
+**但本地只需要跑到 `seed.config`，不需要完成编译。** 环境选其一即可：
+- Ubuntu 虚拟机（VMware/VirtualBox，40GB+ 磁盘）
+- WSL2（Windows 用户推荐，**注意：** 务必在 Linux 的原生家目录下操作，如 `~/` 或 `/home/`，切勿在 Windows 挂载盘如 `/mnt/d/` 下克隆和编译，否则会因文件系统大小写不敏感导致编译失败）
+- Docker 容器
 
-4. `git reset --hard 687407acdc585355acd24726eac61dca60cd06fb`  退回R21.10.1版本；如果想用最新的master版本，请跳过此步
+---
 
-5. 更改LAN口的默认IP地址（不需要可跳过）
-	```
-	cd lede
-	vim package/base-files/files/bin/config_generate
-	vi /etc/config/network
-	i                                                 #插入模式；找到192.168.1.1，修改；按ESC退出编辑模式
-	:wq                                               #保存退出
-	```
+## 一、本地生成 seed.config
 
-6. 添加下面代码到根目录下`feeds.conf.default`文件内（添加passwall源）
-	```
-	src-git lienol https://github.com/xiaorouji/openwrt-passwall
-	```
+### 1.1 环境准备
 
-7. 添加openclash源
-	```
-	# cd进入Clone项目
-	mkdir package/luci-app-openclash
-	cd package/luci-app-openclash
-	git init
-	git remote add -f origin https://github.com/vernesong/OpenClash.git
-	git config core.sparsecheckout true
-	echo "luci-app-openclash" >> .git/info/sparse-checkout
-	git pull --depth 1 origin master
-	git branch --set-upstream-to=origin/master master
+安装编译依赖。推荐 Ubuntu 22.04 / 24.04 LTS。
 
-	# 编译 po2lmo (如果有po2lmo可跳过)
-	pushd luci-app-openclash/tools/po2lmo
-	make && sudo make install
-	popd
+```bash
+# 方法一：一键脚本（推荐）
+sudo bash -c 'bash <(curl -s https://build-scripts.immortalwrt.org/init_build_environment.sh)'
 
-	# 回退到主项目目录
-	cd ../..
-	```
-
-8. 添加其他主题和插件（不需要可跳过）
-	```
-	git clone https://github.com/sirpdboy/luci-theme-opentopd package/luci-theme-opentopd
-	
-	rm -rf package/lean/luci-app-wrtbwmon/
-	git clone https://github.com/Se7enMuting/Openwrt-Packages package/Openwrt-Packages
-	
-	rm -rf package/lean/luci-theme-argon/
-	git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon
-	```
-
-9. update feeds
-	```
-	./scripts/feeds update -a
-	```
-
-10. 强制安装（-f）feeds，如feeds和lean源有同名的package，强制安装feeds里的
-	```
-	./scripts/feeds install -a -f
-	```
-
-11. 添加poweroff按钮，这步必须要在feeds install之后，编译之前
-	```
-	cd lean #进入源码目录
-	curl -fsSL https://raw.githubusercontent.com/sirpdboy/other/master/patch/poweroff/poweroff.htm > ./feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_system/poweroff.htm
-	curl -fsSL https://raw.githubusercontent.com/sirpdboy/other/master/patch/poweroff/system.lua > ./feeds/luci/modules/luci-mod-admin-full/luasrc/controller/admin/system.lua
-	```
-
-12. 进入交互式配置界面
-
-		make menuconfig
-
-	- 开启IPV6
-	   - 选上 Extra packages >+ ipv6helper
-	   - 在 Network > Firewall > ip6tables 下启用 ip6tables-extra 和 ip6tables-mod-nat 项。
-	- 取消samba
-	   - 取消 Extra packages >- autosamba
-	   - 在 LuCI > Applications里，现在可以取消luci-app-samba了
-	- 编译丰富插件时，建议修改下面两项默认大小，留足插件空间
-	   - Target Images > (16) Kernel partition size (in MB)
-	   *（默认是 16，建议修改成 64）*
-	   - Target Images > (160) Root filesystem partition size (in MB)
-	   *（默认是 160，建议修改成 512+）*
-	- Utilities > Virtualizatio > +qemu-ga ---> PVE虚拟机助手QEMU-Guest-Agent，非PVE用户不用选
-	- Target Images >+ QCOW2 IMAGES - VMDK IMAGES ---> VM改生成QCOW2镜像，PVE用，非PVE用户可跳过
-	- Base system >+ dnsmasq-full ---> 选满（HAVE不选）
-	- LuCI > Modules >+ Luci-compat ---> OpenClash依赖
-	- Network > IP Addresses and Names >+ ddns-scripts_cloudflare.com-v4 + ddns-scripts_freedns_42_pl + ddns-scripts_godaddy.com-v1 ---> DDNS插件依赖
-	- Network >+ iperf3 ---> luci-app-netspeedtest需要
-	- Network > WirlessAPD >- wpad - hostapd-common ---> 取消Wirless选项，避免报错，可跳过
-	- 添加主题 >+ opentopd +argon
-	- LuCI > Applications 先选[XX-2个](https://github.com/Se7enMuting/Actions-OpenWrt/blob/main/lean/.config)，因为首次编译，建议openclash和passwall先不选；如果全选，且编译通过，那下面的第二次编译就不需要了
-	- 最后再确认kmod-tun被选上了（openclash依赖，一定要最后确认一次，因为会被自动取消掉）
-	   - Kernel modules > Network Support >+ kmod-tun
-
-
-13. `make -j8 download V=s` 下载dl库（国内请尽量全局科学上网）
-
-14. 输入 `make -j1 V=s` （-j1 后面是线程数；第一次编译推荐用单线程）即可开始编译你要的固件了
-
-15. 编译完成后输出路径：bin/targets
-
-#### 第二次完整编译，带上openclash和passwall
-1. 清除配置
-	```
-	rm -rf ./tmp && rm -rf .config
-	```
-
-2. 重复**首次编译**中的第12步，LuCI > Applications里选[XX个](https://github.com/Se7enMuting/Actions-OpenWrt/blob/main/lean/.config)（+openclash和passwall）
-	```
-	make menuconfig
-	```
-
-3. 可多线程编译
-	```
-	make -j$(($(nproc) + 1)) V=s
-	```
-
-4. 编译完成后输出路径：bin/targets
-
-#### 以后更新编译（更新Lean master源码+feeds+openclash）
-```
-cd lede                                                       #进入LEDE目录
-git pull                                                      #同步更新lean master源码，编译指定commit版本可跳过此步
-cd package/luci-app-openclash && git pull                     #进入OpenClash目录并更新源码
-cd ../..                                                      #退回到lede目录
-./scripts/feeds update -a && ./scripts/feeds install -a -f
-make defconfig
-make -j$(($(nproc) + 1)) V=s
+# 方法二：手动 apt 安装
+sudo apt update
+sudo apt install -y build-essential asciidoc binutils bzip2 gawk gettext git \
+  libncurses-dev libz-dev patch python3 unzip zlib1g-dev libc6-dev-i386 \
+  subversion flex uglifyjs gcc-multilib p7zip p7zip-full msmtp libssl-dev \
+  texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake \
+  libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget curl \
+  swig rsync ccache
 ```
 
-## 2.重新配置config的编译方法：
+注意：**不要用 root 用户编译。**
 
-### 重新配置config编译
-```
-cd lede
-rm -rf ./tmp && rm -rf .config
-make menuconfig
-make -j$(($(nproc) + 1)) V=s
+### 1.2 克隆 ImmortalWrt 源码
+
+```bash
+git clone --depth 1 https://github.com/immortalwrt/immortalwrt.git
+cd immortalwrt
 ```
 
-### 更新Lean master源码+feeds+openclash & 重新配置config编译
+- `--depth 1` 只克隆最新 commit，省时省空间
+- 如需指定稳定分支：`git clone -b openwrt-25.12 --depth 1 https://github.com/immortalwrt/immortalwrt.git`
+- 推荐用 `master` 分支（活跃更新，固件版本号在 `/etc/openwrt_release` 可查）
+
+### 1.3 添加 PassWall2 和 OpenClash
+
+#### PassWall2（通过 feeds）
+
+编辑根目录的 `feeds.conf.default`，追加以下两行：
+
 ```
-cd lede
-git pull                                                   #同步更新lean master源码，编译指定commit版本可跳过此步
-cd package/luci-app-openclash && git pull
+src-git passwall2 https://github.com/Openwrt-Passwall/openwrt-passwall2.git
+src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git
+```
+
+> 注意：PassWall 上游已迁移到 `Openwrt-Passwall` 组织，旧地址 `xiaorouji/openwrt-passwall2` 已 404。
+
+#### OpenClash（通过 sparse checkout 克隆到 package 目录）
+
+```bash
+mkdir -p package/luci-app-openclash
+cd package/luci-app-openclash
+git init
+git remote add -f origin https://github.com/vernesong/OpenClash.git
+git config core.sparsecheckout true
+echo "luci-app-openclash" >> .git/info/sparse-checkout
+git pull --depth 1 origin master
+git branch --set-upstream-to=origin/master master
+
+# 编译 po2lmo（如果已装过可跳过）
+pushd luci-app-openclash/tools/po2lmo
+make && sudo make install
+popd
+
 cd ../..
-./scripts/feeds update -a && ./scripts/feeds install -a -f
-rm -rf ./tmp && rm -rf .config
+```
+
+#### 可选：主题和其他插件
+
+```bash
+git clone https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon
+# 关机/电源管理插件（独立插件形式，不污染系统核心代码）
+git clone https://github.com/sirpdboy/luci-app-poweroffdevice package/luci-app-poweroffdevice
+# 额外的自定义包（根据需要添加，例如作者本人的 Openwrt-Packages）
+# git clone https://github.com/Se7enMuting/Openwrt-Packages package/Openwrt-Packages
+```
+
+> 注意：`luci-theme-argon` 的 `18.06` 分支是给 Lean LEDE 用的，ImmortalWrt 必须用默认的 `master` 分支（v2.x）。同时推荐使用独立的关机插件 `luci-app-poweroffdevice`，更符合现代 LuCI 规范。
+
+### 1.4 更新并安装 feeds
+
+```bash
+./scripts/feeds update -a
+./scripts/feeds install -a -f
+```
+
+`-f` 表示 feeds 与源码的同名 package 优先用 feeds 的版本。
+
+### 1.5 make menuconfig 配置
+
+```bash
 make menuconfig
-make -j$(($(nproc) + 1)) V=s
 ```
 
-# 碎碎念3：安装
+以下为推荐配置（x86 软路由 / PVE 虚拟机场景）：
 
-### PVE安装指令
-   1. local(***)-->ISO镜像-->上传
-   ```
-   qm importdisk 100 /var/lib/vz/template/iso/openwrt-x86-64-generic-squashfs-combined-efi.img local-lvm
-   ```
-`100`为虚拟机ID，请自行修改
+| 路径 | 操作 | 说明 |
+|------|------|------|
+| `LuCI > Applications > luci-app-openclash` | **+**（选中） | OpenClash |
+| `LuCI > Applications > luci-app-passwall2` | **+**（选中） | PassWall2 |
+| `LuCI > Applications > luci-app-poweroffdevice` | **+**（选中） | 关机/电源管理插件 |
+| `LuCI > Modules > luci-compat` | **+**（选中） | OpenClash 依赖 |
+| `Kernel modules > Network Support > kmod-tun` | **+**（选中） | OpenClash 依赖，**最后确认一次**（可能被自动取消） |
+| `Extra packages > ipv6helper` | **+**（选中） | IPv6 支持 |
+| `Network > Firewall > iptables` 下的 ip6tables-extra、ip6tables-mod-nat | **+**（选中） | IPv6 依赖 |
+| `Extra packages > autosamba` | **-**（取消） | 不用 samba 就去掉 |
+| `LuCI > Applications > luci-app-samba` | **-**（取消） | 同上 |
+| `Target Images > Kernel partition size` | 改为 `64` | 插件多时增大内核分区（默认 16MB） |
+| `Target Images > Root filesystem partition size` | 改为 `512` | 插件多时增大根分区（默认 160MB） |
+| `Base system > dnsmasq-full` | **+**（选中，HAVE 不选） | 完整版 dnsmasq |
+| `Utilities > Virtualization > qemu-ga` | **+**（选中） | PVE 虚拟机 QEMU Guest Agent |
+| `Target Images > QCOW2 IMAGES` | **+**（选中） | PVE 用 QCOW2 镜像 |
+| `Network > iperf3` | **+**（选中） | netspeedtest 依赖 |
+| `Network > IP Addresses and Names > ddns-scripts_*` | **+**（按需） | DDNS 插件 |
 
-### openwrt源修改，注意要和版本对应
-登录web，系统 > 软件包 > 设置，修改：
+> 无需分"首次"和"第二次"编译——一次性选好所有需要的插件即可。
+
+### 1.6 下载依赖库并导出 seed.config
+
+```bash
+make defconfig
+make download -j8 V=s
+./scripts/diffconfig.sh > seed.config
 ```
-src/gz openwrt_core https://mirrors.cloud.tencent.com/lede/releases/21.02.0/targets/x86/64/packages
-src/gz openwrt_base https://mirrors.cloud.tencent.com/lede/releases/21.02.0/packages/x86_64/base
-src/gz openwrt_luci https://mirrors.cloud.tencent.com/lede/releases/21.02.0/packages/x86_64/luci
-src/gz openwrt_packages https://mirrors.cloud.tencent.com/lede/releases/21.02.0/packages/x86_64/packages
-src/gz openwrt_routing https://mirrors.cloud.tencent.com/lede/releases/21.02.0/packages/x86_64/routing
-src/gz openwrt_telephony https://mirrors.cloud.tencent.com/lede/releases/21.02.0/packages/x86_64/telephony
+
+- `make defconfig`：将 menuconfig 选择的配置补全为完整 `.config`
+- `make download`：下载所有源码包（为云编译预热，避免云上因网络问题下载失败）
+- `./scripts/diffconfig.sh > seed.config`：导出差异配置（只有你改动过的项）
+
+**至此本地的任务就完成了。** 不需要本地 `make`，把 `seed.config` 的内容复制出来即可。
+
+---
+
+## 二、云编译（GitHub Actions）
+
+### 2.1 Fork 项目
+
+Fork [Se7enMuting/Actions-OpenWrt](https://github.com/Se7enMuting/Actions-OpenWrt) 到你自己的 GitHub 账号。
+
+仓库结构：
 ```
-因为是自编译固件，和官方签名不一致，无法opkg update成功，要把这行用#注释掉`# option check_signature`
+immortalwrt/
+  .config              ← 放你的完整 .config（或 seed.config 内容）
+  diy-part1.sh         ← feeds 更新前执行的脚本
+  diy-part2.sh         ← feeds 更新后、编译前执行的脚本
+  diy-part3.sh         ← 额外的自定义脚本（可选）
+```
 
-# 碎碎念4：其他
+### 2.2 更新 .config
 
-### 用`diffconfig.sh`脚本导出[默认的`.config`]和[menuconfig之后的`.config`]之间的差异文件`seed.config`，给云编译备用
+将上一步生成的 `seed.config` 的内容，粘贴替换 `immortalwrt/.config` 文件。
 
-	make defconfig                             #新clone首次menuconfig之后需执行一次
-	./scripts/diffconfig.sh > seed.config
+> 由于 `seed.config` 是差异配置（非完整），GitHub Actions 工作流中的 `make defconfig` 步骤会自动补全默认项。你也可以直接把本地完整 `.config` 放进去。
 
-### `.config`文件笔记(在Ubuntu Desktop下是隐藏文件)
-	make defconfig
-	# 1. 如果没有.config文件，生成默认配置的.config文件
-	# 2. 如果有.config文件，检测是否有缺少的配置，有缺少则按照默认的y/n添加上去;没有则使用当前.config文件，不会被改动成默认配置
+### 2.3 编辑 diy-part1.sh（pre-feeds 脚本）
 
-	make menuconfig
-	# 1. 通过菜单选择来生成.config文件
+在 feeds 更新前添加 PassWall2 源：
 
-- make前必须要有`.config`文件
-- 如果没有新增编译项目，可以直接使用上次的`.config`，用`make defconfig`确认是否是 `# No change to .config`
-- 或使用`diffconfig.sh`导出的差异配置`seed.config`，改名成`.config`，然后用`make defconfig`生成完整版的`.config`，再make
+```bash
+#!/bin/bash
 
-### 单独编译 OpenWRT ipk 插件
+# 添加 PassWall2 源
+echo 'src-git passwall2 https://github.com/Openwrt-Passwall/openwrt-passwall2.git' >> feeds.conf.default
+echo 'src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git' >> feeds.conf.default
+```
 
-1. 保存插件源码
-	- 下载源码`git clone`到~`/lede/package`
-	- 或者已经在feeds里面了，无需在手动下载，`./scripts/feeds update -a && ./scripts/feeds install -a`即可
+### 2.4 编辑 diy-part2.sh（pre-compile 脚本）
 
-2. 配置
-	- `make menuconfig`
-	- 然后进入对应的子菜单中找到对应插件按`M`表示选中插件，但不编译进固件
+在编译前克隆 OpenClash 并做一些配置修改：
 
-3. 编译
-	- `make package/xxxxx/compile V=99`
-	- xxxxx 就是你需要单独编译的程序名称
-	- 注意这里是固定格式，不用填写插件所在的路径，直接用名字即可，只要上面配置时用`M`选中了
+```bash
+#!/bin/bash
 
-4. ipk 生成路径
-	- `~/lede/bin/packages/x86_64/xxxx`
+# 修改默认 LAN IP
+sed -i 's/192.168.1.1/192.168.1.95/g' package/base-files/files/bin/config_generate
 
-5. 其他
-	- 若无法编译出插件，手动删除`bin`,`feeds`,`package/feeds`这些文件夹，再`./scripts/feeds update -a && ./scripts/feeds install -a`下
+# 克隆 OpenClash
+mkdir -p package/luci-app-openclash
+cd package/luci-app-openclash
+git init
+git remote add -f origin https://github.com/vernesong/OpenClash.git
+git config core.sparsecheckout true
+echo "luci-app-openclash" >> .git/info/sparse-checkout
+git pull --depth 1 origin master
+git branch --set-upstream-to=origin/master master
+cd ../..
 
-### 默认luci-app-ddns插件里的dnspod和aliyun如何正确使用
-- 域名的正确填写方法
-	- 如果是`example.com`，则域名填：`@example.com`
-	- 如果是`blog.example.com`，则域名填：`blog@example.com`
-	- 如果是`good.blog.example.com`，则域名填：`good.blog@example.com`
+# 克隆主题与关机插件（独立插件形式，不污染系统核心代码）
+git clone https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon
+git clone https://github.com/sirpdboy/luci-app-poweroffdevice package/luci-app-poweroffdevice
+# 额外的自定义包（根据需要选择克隆）
+# git clone https://github.com/Se7enMuting/Openwrt-Packages package/Openwrt-Packages
+
+# 去除自带主题/插件（避免冲突）
+rm -rf package/feeds/luci/luci-theme-argon
+# rm -rf package/feeds/luci/luci-app-wrtbwmon
+```
+
+### 2.5 触发编译
+
+进入你的仓库 → **Actions** → 选择对应的 ImmortalWrt 工作流 → **Run workflow**。
+
+编译完成后，在 **Artifacts** 或 **Release** 中下载固件。输出文件在 `bin/targets/x86/64/` 下。
+
+---
+
+## 三、安装
+
+### PVE 安装
+
+```bash
+qm importdisk 100 /var/lib/vz/template/iso/openwrt-x86-64-generic-squashfs-combined-efi.img local-lvm
+```
+
+`100` 为你的虚拟机 ID，请自行修改。
+
+### 软件源配置（ImmortalWrt）与内核模块锁死警告
+
+登录 Web → 系统 → 软件包 → 设置，修改为官方源（注意版本号要和你的固件一致）：
+
+```
+src/gz immortalwrt_core https://downloads.immortalwrt.org/releases/25.12.0/targets/x86/64/packages
+src/gz immortalwrt_base https://downloads.immortalwrt.org/releases/25.12.0/packages/x86_64/base
+src/gz immortalwrt_luci https://downloads.immortalwrt.org/releases/25.12.0/packages/x86_64/luci
+src/gz immortalwrt_packages https://downloads.immortalwrt.org/releases/25.12.0/packages/x86_64/packages
+src/gz immortalwrt_routing https://downloads.immortalwrt.org/releases/25.12.0/packages/x86_64/routing
+src/gz immortalwrt_telephony https://downloads.immortalwrt.org/releases/25.12.0/packages/x86_64/telephony
+```
+
+自编译固件由于签名不一致，需要注释掉签名检查：
+
+```bash
+# option check_signature
+```
+
+> [!WARNING]
+> **内核模块 (vermagic) 锁死警告**
+> 
+> 由于 OpenWrt 编译时有内核哈希一致性检查（vermagic），自编译系统的内核哈希与官方源预编译模块（`kmod-*`）通常无法完美匹配。即使关闭签名检查，后续通过 `opkg install kmod-xxx` 安装内核级别插件（如各种网卡驱动、网关加速模块等）依然会报错失败。
+> 
+> **因此，在本地 `menuconfig` 阶段，务必将未来可能需要的内核级别模块一次性勾选为内置（`*`），不要依赖后期在线安装。**
+
+国内用户可把 `downloads.immortalwrt.org` 替换为镜像站地址（如腾讯云、清华源等镜像站）。
+
+---
+
+## 四、其他碎碎念
+
+### seed.config 工作流总结
+
+```
+本地 Ubuntu → make menuconfig → ./scripts/diffconfig.sh > seed.config
+                                                              ↓
+                               seed.config → Actions-OpenWrt/immortalwrt/.config
+                                                              ↓
+                                            GitHub Actions → 云编译 → 下载固件
+```
+
+### 更新编译
+
+在 Actions-OpenWrt 仓库中更新 `.config` 后重新触发工作流即可。也可以用 `diy-part3.sh` 做一些清理/重置操作。
+
+### 单独编译 IPK 插件
+
+1. 在 `menuconfig` 中将插件设为 `M`（编译为独立 IPK，不进固件）
+2. `make package/<插件名>/compile V=99`
+3. IPK 输出路径：`bin/packages/x86_64/<插件名>/`
+
+### DDNS 域名填写方法（luci-app-ddns）
+
+- `example.com` → 域名填 `@example.com`
+- `blog.example.com` → 域名填 `blog@example.com`
+- `good.blog.example.com` → 域名填 `good.blog@example.com`
