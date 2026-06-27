@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "ImmortalWrt 云编译指北（2026版）"
+title: "🧰ImmortalWrt ⛏️云编译📿指北（2026版）"
 subtitle: ""
 author: "Se7enMuting"
 header-img: "img/posts/211012/post-bg.png"
