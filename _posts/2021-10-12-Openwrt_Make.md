@@ -3,6 +3,7 @@ layout: post
 title: "🧰ImmortalWrt ⛏️云编译📿指北（2026版）"
 subtitle: ""
 author: "Se7enMuting"
+last_modified_at: "2026-06-27"
 header-img: "img/posts/211012/post-bg.png"
 header-mask: 0.4
 tags:

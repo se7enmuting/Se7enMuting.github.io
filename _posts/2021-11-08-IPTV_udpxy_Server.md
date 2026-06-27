@@ -3,6 +3,7 @@ layout: post
 title: "📺在 Debian 内建一个 udpxy 转发服务，实现自由看(上海电信) IPTV"
 subtitle: ""
 author: "Se7enMuting"
+last_modified_at: "2026-06-27"
 header-img: "img/posts/211108/post-bg.png"
 header-mask: 0.4
 tags:
