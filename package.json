@@ -23,7 +23,7 @@
         "push": "git push origin master --tag"
     },
     "overrides": {
-        "js-yaml": "^4.2.0",
+        "js-yaml": "^4.3.0",
         "minimatch": "^3.1.5"
     }
 }
