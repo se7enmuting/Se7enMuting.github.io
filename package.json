@@ -10,20 +10,20 @@
     },
     "bugs": "https://github.com/Se7enMuting",
     "devDependencies": {
-        "grunt": ">=1.5.3",
-        "grunt-banner": "~0.2.3",
-        "grunt-contrib-less": "^2.0.0",
-        "grunt-contrib-uglify": "^4.0.1",
-        "grunt-contrib-watch": "^1.1.0"
+        "clean-css": "^5.3.3",
+        "less": "^4.9.1",
+        "uglify-js": "^3.19.3"
     },
     "scripts": {
         "start": "bundle exec jekyll serve -w -l --host 0.0.0.0",
-        "dev": "grunt watch & npm run start",
+        "dev": "node scripts/dev.cjs",
         "boil": "git push boilerplate boilerplate:master",
-        "push": "git push origin master --tag"
+        "push": "git push origin master --tag",
+        "build": "node scripts/assets.cjs",
+        "watch": "node scripts/assets.cjs --watch",
+        "test": "node --test scripts/assets.test.cjs"
     },
-    "overrides": {
-        "js-yaml": "^4.3.0",
-        "minimatch": "^3.1.5"
+    "engines": {
+        "node": ">=20"
     }
 }
