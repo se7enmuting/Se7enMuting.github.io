@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Outlook 里明明有这封邮件，为什么就是搜不到"
+title: "📧 Outlook 里明明有这封邮件，为什么就是搜不到"
 subtitle: "从一个漏掉的工单号开始，记一次 PST 分卷、索引对账、邮件修复和插件落地的完整排查"
 author: "Se7enMuting"
 date: "2026-11-08"
